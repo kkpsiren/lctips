@@ -1,154 +1,127 @@
 # LCTips
 
-A Next.js application for visualizing tips on Lens Chain. Search for Lens protocol users and explore their tip transaction history (both sent and received) in GHO, BONSAI, and POINTLESS tokens. Discover new profiles by seeing who tips the people you love — find new accounts through tipping activity!
+This repository is [kkpsiren/lctips](https://github.com/kkpsiren/lctips).
+It is a fork of [JaviEzpeleta/lctips](https://github.com/JaviEzpeleta/lctips).
 
-> **Note:** Most Lens clients no longer support tipping in BONSAI. Historical BONSAI tips are still tracked, but new activity is rare.
+LCTips is a Next.js app for Lens Chain transfers.
+You search for a Lens handle.
+The app shows sent and received GHO, BONSAI, and POINTLESS amounts.
+The app metadata uses [https://lctips.xyz](https://lctips.xyz).
 
-🌐 **Live**: [https://lctips.xyz](https://lctips.xyz)
+## Fork changes
 
-![LCTips Screenshot](public/img/lctips-screenshot.webp)
+The two latest commits belong to this fork.
 
-## Features
+`Classify transfer sources` adds `classifyTransferSource` in `lib/transfer-source.ts`.
+The function reads transaction logs.
+The function returns a `TransferSource`.
+The detail API stores that source on the transfer.
+A source kind can be `profile_tip`, `post_tip`, `collect`, `fundraising`, `prediction`, or `competition`.
+A source kind can also be `swap`, `bridge`, `known_system_transfer`, `unknown_post_action`, or `unknown_account_action`.
+Other transfers stay `unknown`.
+`DetailTransferRow` shows `source.label`.
+`contextualizeTransferSource` sets a bridge label to `Bridge out` or `Bridge in`.
 
-- 🔍 **Real-time Search** - Find Lens protocol users with 300ms debounced search
-- 💸 **Tip Visualization** - View sent and received tips in GHO, BONSAI, and POINTLESS
-- 📊 **Transaction Aggregation** - Grouped and sorted tip history by sender/receiver
-- ⚡ **Fast Performance** - Built with Next.js 15, Turbopack, and React 19
-- 📱 **Responsive Design** - Beautiful UI with TailwindCSS v4 and Radix UI
-- 🔗 **Web3 Integration** - Connect wallets with ConnectKit and Wagmi
-- 👀 **Profile Discovery** - See who tips your favorite people and discover new profiles through tipping
+`Speed up transfer fetching` caches explorer pages.
+The same change loads those pages together.
+`getTransfers` keeps each page for 60 seconds.
+The cache key is the address and the page number.
+The cache holds at most 2000 keys.
+A failed fetch removes that cache entry.
+`useProgressiveTransfers` requests two pages at the same time.
+One burst requests at most eight pages.
+Loading stops at 5000 transfers.
 
-## Tech Stack
+`getTransfers` and `getOutcomeTransfers` start at `2026-01-01` UTC.
+Each explorer request asks for 100 transfers.
+Edit that start date in `lib/lens-explorer.ts` when you need older transfers.
 
-### Core Technologies
-- **Next.js 15** with App Router and Turbopack
-- **React 19** with TypeScript
-- **TailwindCSS v4** with tw-animate-css
-- **Lens Protocol SDK** (@lens-protocol/react, @lens-protocol/client)
-- **Wagmi/ConnectKit** for Web3 wallet connections
+## Behavior
 
-### Blockchain & APIs
-- **ethers.js** for blockchain interactions
-- **Lens Chain** (RPC: https://rpc.lens.xyz/)
-- **Lens Explorer API** for transaction history
-- **Lens GraphQL API** for profile data
+Search waits 300 ms.
+The app then queries Lens profiles.
+The profile API groups amounts by the other address.
+That API omits a grouped total below 0.01.
+The detail page loads `/api/detail-transfers-page`.
+A counterparty row links to another profile.
+The rewards page lists recipients from the 2025 Lens Chain rewards program.
+`/thank-you` plays a video from exported GHO ranking JSON.
+The export keeps the top 20 GHO counterparties.
+The UI shows `WGHO` and `ETH` amounts as GHO.
+The landing page says most Lens clients no longer support BONSAI tipping.
+The app still shows BONSAI transfers.
+POINTLESS rows use the symbol `pointless`.
+`sticker-library/` holds the Lensie sticker packs for the thank-you video.
+`sticker-library/INDEX.md` lists 10 packs and 268 stickers.
+The default export requests Gemini notes for the top 10 ranks.
+That request uses `GEMINI_API_KEY`.
+The video still runs when that key is absent.
 
-### UI & Animation
-- **Radix UI** components
-- **Framer Motion** for animations
-- **@number-flow/react** for animated number transitions
-- **Lucide React** icons
+## Stack
 
-## Getting Started
+The app uses Next.js 15, React 19, and TypeScript.
+`npm run dev` starts Next.js with Turbopack.
+Styles use Tailwind CSS v4 and `tw-animate-css`.
+The UI uses Radix UI, Framer Motion, Lucide, and `@number-flow/react`.
+Lens profile calls use `@lens-protocol/client` and `@lens-protocol/react`.
+Wallets use wagmi and ConnectKit.
+Chain reads use ethers and `https://rpc.lens.xyz`.
+Transfer history uses `https://explorer-api.lens.xyz`.
 
-### Prerequisites
+## Setup
 
-- Node.js 18+ and npm
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/JaviEzpeleta/lctips.git
-   cd lctips
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Environment Setup**
-   ```bash
-   cp .env.example .env.local
-   ```
-   Then edit `.env.local` and add your WalletConnect Project ID (get one at [cloud.walletconnect.com](https://cloud.walletconnect.com)).
-
-4. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open in browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-### Build for Production
+Install Node.js and npm.
+Clone this fork.
 
 ```bash
+git clone https://github.com/kkpsiren/lctips.git
+cd lctips
+npm install
+cp .env.example .env.local
+```
+
+Set `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` in `.env.local`.
+Create that id at [cloud.walletconnect.com](https://cloud.walletconnect.com).
+Set `GEMINI_API_KEY` only when you want generated thank-you notes.
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+```bash
+npm run lint
 npm run build
 npm start
 ```
 
-## Project Structure
+`npm run lint` runs `next lint`.
+`npm run build` creates the production build.
+`npm start` serves that build.
 
-```
-├── app/                    # Next.js app router
-│   ├── api/               # API routes
-│   │   ├── profile/       # Main profile + tips endpoint
-│   │   ├── basic-profile/ # Basic profile data
-│   │   ├── profile-data-by-address/ # Profile lookup by address
-│   │   └── all-rewards/   # Rewards aggregation
-│   ├── (tips)/            # Route group
-│   │   ├── u/[handle]/    # Dynamic user profile pages
-│   │   └── rewards/       # Rewards leaderboard
-│   └── ...                # Layout, global styles, root page
-├── components/            # React components
-│   ├── search/           # Search functionality
-│   ├── ui/               # UI library components
-│   └── ...               # Tip display, loading states, profile views
-├── lib/                  # Core utilities
-│   ├── lens-api.ts       # Lens Protocol GraphQL client
-│   ├── lens-explorer.ts  # Transaction fetching via Lens Explorer
-│   ├── constants.ts      # App constants
-│   ├── types.ts          # TypeScript type definitions
-│   ├── utils.ts          # Utility functions
-│   ├── time.ts           # Time formatting helpers
-│   └── graphql/          # GraphQL queries & mutations
-├── hooks/                # Custom React hooks
-└── public/               # Static assets
-```
+## Layout
 
-## Key Features Explained
-
-### Transaction Processing
-1. **Profile Search** - Users search for Lens handles with real-time results
-2. **Data Fetching** - Parallel fetching from multiple APIs:
-   - Lens GraphQL API for profile data
-   - Lens Explorer API for transaction history (paginated)
-   - ethers.js for GHO transaction details
-3. **Aggregation** - Groups transactions by sender/receiver, sums amounts, applies 0.01 minimum threshold
-4. **Visualization** - Displays in organized tabs with animated counters
-
-### Supported Tokens
-- **GHO** - Native Lens Chain currency (primary tipping token)
-- **BONSAI** - Bonsai token tips *(most Lens clients no longer support Bonsai tipping — historical data only)*
-- **POINTLESS** - Pointless token tips
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Development Guidelines
-
-- Follow existing code style and patterns
-- Keep console.log statements to essential error logging only
-- Use TypeScript for type safety
-- Test your changes before submitting
+- `app/` holds the App Router pages and API routes.
+- `app/(tips)/u/[handle]` is the profile detail page.
+- `app/(tips)/u_legacy/[handle]` is the older profile page.
+- `app/(tips)/rewards` is the rewards page.
+- `app/thank-you` is the thank-you studio.
+- `app/api/profile` groups profile tip totals.
+- `app/api/detail-transfers-page` returns one classified transfer page.
+- `components/` holds search, tip, and detail UI.
+- `hooks/useProgressiveTransfers.ts` loads detail pages.
+- `lib/lens-explorer.ts` fetches Lens Explorer transfers.
+- `lib/lens-explorer-cache.ts` stores those pages.
+- `lib/transfer-source.ts` classifies a transfer.
+- `lib/lens-api.ts` calls the Lens GraphQL API.
+- `remotion/` holds the thank-you video.
+- `sticker-library/` holds sticker images.
+- `scripts/generate-thank-you-audio.mjs` writes WAV files to `public/thank-you/`.
+- `public/` holds static files.
 
 ## License
 
-This project is open source and available under the [MIT License](LICENSE).
-
-## Acknowledgments
-
-- Built for the Lens Protocol ecosystem
-- Uses Lens Chain infrastructure
-- UI components from Radix UI
-
----
-
-**Note**: This application is designed specifically for Lens Chain and may not work with other blockchain networks without modification.
-
-**Note**: For most Lens OG users, calculating all the tips since Lens V3 went live, was taking too long for the live version, so currently it only looks for tips made this 2026, but you can tweak it locally.. or, please, if i can help u in any way, contact me on Orb! Thanks so much for reading.
-
-
+This project uses the MIT license.
+See `LICENSE`.
+The app targets Lens Chain.
